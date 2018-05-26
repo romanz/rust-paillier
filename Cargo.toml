@@ -62,6 +62,6 @@ harness = false
 name = "arith"
 harness = false
 
-[[bench]]
-name = "algo"
-harness = false
+# [[bench]]
+# name = "algo"
+# harness = false
