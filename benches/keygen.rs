@@ -8,7 +8,7 @@ mod helpers;
 mod bench {
 
     use bencher::Bencher;
-    use paillier::RampPaillier;
+    use paillier::GmpPaillier;
     use paillier::*;
     use helpers::*;
 
@@ -24,11 +24,11 @@ mod bench {
     }
 
     benchmark_group!(ramp,
-        self::bench_key_generation<RampPaillier, KeySize512>,
-        self::bench_key_generation<RampPaillier, KeySize1024>,
-        self::bench_key_generation<RampPaillier, KeySize2048>,
-        self::bench_key_generation<RampPaillier, KeySize3072>,
-        self::bench_key_generation<RampPaillier, KeySize4096>
+        self::bench_key_generation<GmpPaillier, KeySize512>,
+        self::bench_key_generation<GmpPaillier, KeySize1024>,
+        self::bench_key_generation<GmpPaillier, KeySize2048>,
+        self::bench_key_generation<GmpPaillier, KeySize3072>,
+        self::bench_key_generation<GmpPaillier, KeySize4096>
     );
 
 }
