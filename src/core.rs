@@ -2,6 +2,8 @@
 
 use std::fmt;
 
+use rayon::join;
+
 use ::traits::*;
 use ::arithimpl::traits::*;
 use ::BigInteger as BigInt;
@@ -64,15 +66,24 @@ fn l(u: &BigInt, n: &BigInt) -> BigInt {
 }
 
 impl<'c> Decrypt<DecryptionKey, &'c RawCiphertext, RawPlaintext> for Paillier {
-    fn decrypt(dk: &DecryptionKey, c: &'c RawCiphertext) -> RawPlaintext {        
-        // process using p
-        let cp = BigInt::modpow(&c.0, &dk.pminusone, &dk.pp);
-        let lp = l(&cp, &dk.p);
-        let mp = (&lp * &dk.hp) % &dk.p;
-        // process using q
-        let cq = BigInt::modpow(&c.0, &dk.qminusone, &dk.qq);
-        let lq = l(&cq, &dk.q);
-        let mq = (&lq * &dk.hq) % &dk.q;
+    fn decrypt(dk: &DecryptionKey, c: &'c RawCiphertext) -> RawPlaintext {
+        // decrypt in parallel with respectively p and q
+        let (mp, mq) = join(
+            || {
+                // process using p
+                let cp = BigInt::modpow(&c.0, &dk.pminusone, &dk.pp);
+                let lp = l(&cp, &dk.p);
+                let mp = (&lp * &dk.hp) % &dk.p;
+                mp
+            },
+            || {
+                // process using q
+                let cq = BigInt::modpow(&c.0, &dk.qminusone, &dk.qq);
+                let lq = l(&cq, &dk.q);
+                let mq = (&lq * &dk.hq) % &dk.q;
+                mq
+            }
+        );
         // perform CRT
         let m = crt(&mp, &mq, &dk);
         RawPlaintext(m)
@@ -80,7 +91,7 @@ impl<'c> Decrypt<DecryptionKey, &'c RawCiphertext, RawPlaintext> for Paillier {
 }
 
 fn crt(mp: &BigInt, mq: &BigInt, dk: &DecryptionKey) -> BigInt {
-    let mut mq_minus_mp = (mq-mp) % &dk.q;
+    let mut mq_minus_mp = (mq - mp) % &dk.q;
     if NumberTests::is_negative(&mq_minus_mp) {
         mq_minus_mp = mq_minus_mp + &dk.q;
     }
